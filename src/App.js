@@ -26,7 +26,6 @@ const App = () => {
     })
   }
 
-  console.log(8888);
 
   // function keyEvent(e) {
   //   console.log(e.key);
@@ -74,6 +73,7 @@ const App = () => {
             move(e)
           }}></video>
       </div>
+      <h1>X:{position.x}  Y:{position.y}</h1>
     </>
   )
 }
