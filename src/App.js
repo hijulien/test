@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
 import './App.css'
 
+const keyEvent = (e) => {
+  console.log(e.key);
+}
+
 const App = () => {
 
   const [size, setSize] = useState({
@@ -8,9 +12,9 @@ const App = () => {
     h: 0
   })
 
-  const [position,setPosition] = useState({
-    x:0,
-    y:0
+  const [position, setPosition] = useState({
+    x: 0,
+    y: 0
   })
 
   const video = useRef();
@@ -22,32 +26,23 @@ const App = () => {
     })
   }
 
-  // const keyEvent = (e) => {
-  //   console.log(e.key);
-  // }
-
-  const keyEvent = (e) => {
-    console.log(e.key);
-  }
-
   // function keyEvent(e) {
   //   console.log(e.key);
   // }
-
   const over = () => {
     console.log("over");
-    document.addEventListener('keyup',keyEvent)
+    document.addEventListener('keyup', keyEvent)
   }
 
   const out = () => {
     console.log("out");
-    document.removeEventListener('keyup',keyEvent)
+    document.removeEventListener('keyup', keyEvent)
   }
 
   const move = (e) => {
     setPosition({
-      x:e.nativeEvent.offsetX,
-      y:e.nativeEvent.offsetY
+      x: e.nativeEvent.offsetX,
+      y: e.nativeEvent.offsetY
     })
     // console.log(position);
   }
@@ -71,14 +66,14 @@ const App = () => {
     <>
       <div className='box' ref={video}>
         <video src=""
-        onMouseOver={over}
-        onMouseOut={out}
-        onMouseMove={(e) => {
-          move(e)
-        }}></video>
+          onMouseOver={over}
+          onMouseOut={out}
+          onMouseMove={(e) => {
+            move(e)
+          }}></video>
       </div>
     </>
   )
 }
 
-export default App;
+export default App
