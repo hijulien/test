@@ -26,6 +26,8 @@ const App = () => {
     })
   }
 
+  console.log(8888);
+
   // function keyEvent(e) {
   //   console.log(e.key);
   // }
