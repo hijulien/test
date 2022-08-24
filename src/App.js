@@ -1,81 +1,169 @@
-import React, { useState, useEffect, useRef } from 'react'
-import './App.css'
-
-const keyEvent = (e) => {
-  console.log(e.key);
-}
+import React, { useState, useRef, useEffect } from 'react';
+import Peer from 'peerjs';
+import './App.css';
 
 const App = () => {
 
-  const [size, setSize] = useState({
-    w: 0,
-    h: 0
+  const [data, setData] = useState({
+    myId: '',
+    friendId: '',
+    peer: {},
+    message: '',
+    messages: []
   })
 
-  const [position, setPosition] = useState({
-    x: 0,
-    y: 0
-  })
+  const [flag, setFlag] = useState(0);
 
-  const video = useRef();
+  const local = useRef();
+  const remote = useRef();
 
-  const sizeUpdate = () => {
-    setSize({
-      w: video.current.clientWidth,
-      h: video.current.clientHeight
+  // peer.on('close', () => {
+  //   console.log("对方已挂断");
+  // })
+
+
+  const send = () => {
+    const conn = data.peer.connect(data.friendId);
+    conn.on('open', () => {
+      const msgObj = {
+        sender: data.myId,
+        message: data.message
+      };
+      console.log(data);
+      conn.send(msgObj);
+      setData({
+        ...data,
+        messages: [...data.messages, msgObj],
+        message: ''
+      });
+    });
+  }
+
+  const videoCall = () => {
+    navigator.mediaDevices.getDisplayMedia({
+      video: {
+        cursor: "always"
+      },
+      audio: false
     })
-  }
-
-
-  // function keyEvent(e) {
-  //   console.log(e.key);
-  // }
-  const over = () => {
-    console.log("over");
-    document.addEventListener('keyup', keyEvent)
-  }
-
-  const out = () => {
-    console.log("out");
-    document.removeEventListener('keyup', keyEvent)
-  }
-
-  const move = (e) => {
-    setPosition({
-      x: e.nativeEvent.offsetX,
-      y: e.nativeEvent.offsetY
-    })
-    // console.log(position);
+      .then(localStream => {
+        local.current.srcObject = localStream;
+        const call = data.peer.call(data.friendId, localStream);
+        call.on('stream', (remoteStream) => {
+          remote.current.srcObject = remoteStream;
+        });
+      })
+      .catch(err => {
+        console.log(err);
+      });
   }
 
   useEffect(() => {
-    setSize({
-      w: video.current.clientWidth,
-      h: video.current.clientHeight
-    })
+    const peer = new Peer('office', {
+      host: '124.222.249.224',
+      port: '9000',
+      path: '/myapp'
+    });
 
-    window.addEventListener('resize', sizeUpdate);
-    return () => {
-      window.removeEventListener('resize', sizeUpdate);
-    }
+    peer.on('open', (id) => {
+      console.log("open");
+      setData(data => {
+        return {
+          ...data,
+          myId: id,
+          peer: peer
+        }
+      });
+    });
+
+    peer.on('connection', (conn) => {
+      console.log("connection");
+      setFlag(flag + 1)
+      conn.on('data', (msg) => {
+        setData(data => {
+          return {
+            ...data,
+            messages: [...data.messages, msg]
+          }
+        });
+      });
+    });
+
+    peer.on('call', (call) => {
+      console.log("call");
+      navigator.mediaDevices.getDisplayMedia({
+        video: {
+          cursor: "always"
+        },
+        audio: false
+      })
+        .then(localStream => {
+          local.current.srcObject = localStream;
+          console.log("answer");
+          call.answer(localStream);
+          call.on('stream', (remoteStream) => {
+            remote.current.srcObject = remoteStream;
+          });
+        })
+    });
   }, [])
 
   // useEffect(() => {
-  //   console.log(size);
-  // },[size])
+  //   console.log(data);
+  // },[data.messages])
+
+  useEffect(() => {
+    console.log(data);
+  }, [data])
+
   return (
     <>
-      <div className='box' ref={video}>
-        <video src=""
-          onMouseOver={over}
-          onMouseOut={out}
-          onMouseMove={(e) => {
-            move(e)
-          }}></video>
+      <div className='box'>
+        <video width={800} autoPlay playsInline ref={local} />
+        <video width={800} autoPlay playsInline ref={remote} />
       </div>
-      <h1>X:{position.x}  Y:{position.y}</h1>
+      <div className="col">
+        <p>本地ID: {data.myId}</p>
+        <label>远程ID:</label>
+        <input
+          type="text"
+          value={data.friendId}
+          onChange={e => {
+            setData({
+              ...data,
+              friendId: e.target.value
+            });
+          }} />
+        <br></br>
+        <label>消 息:</label>
+        <input
+          type="text"
+          value={data.message}
+          onChange={e => {
+            setData({
+              ...data,
+              message: e.target.value
+            })
+          }} />
+        <button onClick={send}>发送</button>
+        <button onClick={videoCall}>视频电话</button>
+        <button>test</button>
+        {
+          data.messages
+            ?
+            data.messages.map((message, i) => {
+              return (
+                <div key={`mes${i}`}>
+                  <h3>{message.sender} : {message.message}</h3>
+                </div>
+              )
+            })
+            :
+            <></>
+        }
+      </div>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
